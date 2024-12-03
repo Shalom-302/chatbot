@@ -209,7 +209,7 @@ async def get_transcript(filename: str):
                     audio = recognizer.record(source)
                     
                     try:
-                        text = recognizer.recognize_google(audio, language="fr-FR")
+                        text = recognizer.recognize_google(audio, language="fr-FR, eng-US")
                         full_text += text + " "
                     except sr.UnknownValueError:
                         full_text += "Incomprehensible language"
