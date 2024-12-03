@@ -7,3 +7,13 @@ faiss-cpu
 langchain_google_genai
 langchain_community
 pytesseract
+# pip install -r requirements-examples.txt
+
+# general
+python-dotenv
+
+# streaming libs
+pyaudio
+playsound3==2.2.1
+sounddevice==0.4.7
+numpy==2.0.1

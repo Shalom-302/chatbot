@@ -1,19 +1,105 @@
-# 💬 Chatbot template
+Voici un fichier `README.md` adapté pour votre projet actuel qui se concentre uniquement sur la **transcription vocale** :
 
-A simple Streamlit app that shows how to build a chatbot using Gemini
+---
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
+# **Projet de Transcription Vocale**
 
-### How to run it on your own machine
+## **Description**
+Ce projet effectue la transcription d'un fichier audio en texte en utilisant la bibliothèque Python `speech_recognition` et Google Speech Recognition. Pour contourner les limitations de durée, l'audio est découpé en segments, transcrit morceau par morceau, puis reconstitué en texte complet.
 
-1. Install the requirements
+## **Fonctionnalités**
+1. Découper automatiquement un fichier audio en segments basés sur les silences.
+2. Transcrire chaque segment avec Google Speech Recognition.
+3. Combiner les transcriptions pour produire un texte complet.
+4. Gérer les fichiers temporaires pour éviter d'encombrer le système.
 
+---
+
+## **Technologies Utilisées**
+- **Python** :
+  - `pydub` : Pour découper et manipuler l'audio.
+  - `speech_recognition` : Pour convertir la parole en texte.
+  - `tempfile` : Pour la gestion propre des fichiers temporaires.
+
+---
+
+## **Installation**
+
+### **Prérequis**
+- Python 3.10 ou supérieur.
+- FFmpeg (nécessaire pour `pydub`).
+
+### **Étapes d'installation**
+1. **Cloner le projet** :
+   ```bash
+   git clone <url-du-repo>
+   cd <nom-du-dossier>
    ```
-   $ pip install -r requirements.txt
+
+2. **Créer un environnement virtuel** :
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # macOS/Linux
+   .venv\Scripts\activate     # Windows
    ```
 
-2. Run the app
+3. **Installer les dépendances Python** :
+   ```bash
+   pip install -r requirements.txt
+   ```
 
+4. **Installer FFmpeg** :
+   - macOS :
+     ```bash
+     brew install ffmpeg
+     ```
+   - Ubuntu :
+     ```bash
+     sudo apt update
+     sudo apt install ffmpeg
+     ```
+   - Windows : Téléchargez FFmpeg [ici](https://ffmpeg.org/download.html) et ajoutez-le à votre PATH.
+
+---
+
+## **Utilisation**
+
+1. Placez votre fichier audio dans le dossier du projet (par exemple : `Lesson-001-Anglais.wav`).
+2. Lancez le script Python :
+   ```bash
+   python main.py
    ```
-   $ streamlit run streamlit_app.py
-   ```
+3. La transcription sera affichée dans la console.
+
+---
+
+## **Structure du Projet**
+
+```plaintext
+├── main.py                 # Script principal pour la transcription
+├── requirements.txt        # Dépendances Python
+├── README.md               # Documentation
+└── Lesson-001-Anglais.wav  # Exemple de fichier audio (à ajouter manuellement)
+```
+
+---
+
+## **Exemple de Résultat**
+
+### **Fichier Audio :**
+_"Bonjour, je m'appelle Pierre et je suis ici pour apprendre le français."_
+
+### **Transcription Générée :**
+```plaintext
+Bonjour, je m'appelle Pierre et je suis ici pour apprendre le français.
+```
+
+---
+
+## **Améliorations Futures**
+- Support des fichiers audio multilingues avec détection automatique de la langue.
+- Intégration avec un autre moteur de transcription comme Whisper ou AssemblyAI pour une plus grande précision.
+
+---
+
+Si cela correspond bien à votre projet, vous pouvez simplement remplacer `<url-du-repo>` par l'URL Git de votre dépôt avant de pousser ! 😊
