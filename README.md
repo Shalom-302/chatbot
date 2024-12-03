@@ -1,7 +1,3 @@
-Voici un fichier `README.md` adapté pour votre projet actuel qui se concentre uniquement sur la **transcription vocale** :
-
----
-
 # **Projet de Transcription Vocale**
 
 ## **Description**
@@ -99,7 +95,3 @@ Bonjour, je m'appelle Pierre et je suis ici pour apprendre le français.
 ## **Améliorations Futures**
 - Support des fichiers audio multilingues avec détection automatique de la langue.
 - Intégration avec un autre moteur de transcription comme Whisper ou AssemblyAI pour une plus grande précision.
-
----
-
-Si cela correspond bien à votre projet, vous pouvez simplement remplacer `<url-du-repo>` par l'URL Git de votre dépôt avant de pousser ! 😊

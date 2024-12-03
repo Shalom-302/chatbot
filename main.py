@@ -21,8 +21,8 @@
 # router = APIRouter(prefix="/streamlit", tags=["Streamlit"])
 
 # load_dotenv()
-# # os.getenv("AIzaSyDRwZkwArrKtGbg8GJlQE_4hnRTvzA4gI8")
-# genai.configure(api_key="AIzaSyD50jeE2wcguwlL9gSk5Mc8A6G8T-CnW3o")
+# # os.getenv("")
+# genai.configure(api_key="")
 
 # def get_pdf_text(pdf_file: UploadFile):
 #     text = ""
@@ -159,50 +159,69 @@
     
 #!/usr/bin/env python3
 
+# un exemple de speech recognition
 
 
+from fastapi import FastAPI, HTTPException 
+import os
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import speech_recognition as sr
 import tempfile  # Pour les fichiers temporaires
 
-# Charger le fichier audio principal
-audio_file = "02-Track-2.wav"
-sound = AudioSegment.from_wav(audio_file)
 
-# Découper l'audio en segments basés sur les silences
-audio_chunks = split_on_silence(
-    sound, 
-    min_silence_len=500,  # Silence minimal en millisecondes
-    silence_thresh=sound.dBFS-14,  # Seuil pour détecter le silence
-    keep_silence=500  # Garder un peu de silence autour des segments
-)
+app = FastAPI()
 
-# Initialiser le reconnaisseur
-recognizer = sr.Recognizer()
+@app.get("/")
+async def hello():
+    return {"message": "Hello World"}
 
-# Transcrire chaque chunk
-full_text = ""  # Contiendra le texte complet
 
-for i, chunk in enumerate(audio_chunks):
+
+@app.get("/transcript")
+async def get_transcript(filename: str):
+    
+    if not os.path.exists(filename):
+        raise HTTPException(status_code=404, detail="fichier not found")
+    
     try:
-        # Créer un fichier temporaire
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_file:
-            # Exporter le segment dans le fichier temporaire
-            chunk.export(temp_file.name, format="wav")
-            temp_file.seek(0)  # Remettre le curseur au début
+        
+        sound=AudioSegment.from_wav(filename)
+        audio_chunks= split_on_silence(
+            sound, 
+            min_silence_len=500,  # Silence minimal en millisecondes
+            silence_thresh=sound.dBFS-14,  # Seuil pour détecter le silence
+            keep_silence=500  # Garder un peu de silence autour des segments
+        )
 
-            # Charger le fichier temporaire dans SpeechRecognition
-            with sr.AudioFile(temp_file.name) as source:
-                audio = recognizer.record(source)
-                # Transcrire avec Google API
-                text = recognizer.recognize_google(audio, language="fr-FR")
-                full_text += text + " "  # Ajouter le texte transcrit
-    except sr.UnknownValueError:
-        print(f"Segment {i}: Impossible de reconnaître le texte")
-    except sr.RequestError as e:
-        print(f"Erreur API Google : {e}")
+        
+        recognizer =  sr.Recognizer()
+        
+        full_text = ""
+        
+        for i , chunk in enumerate(audio_chunks):
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_file:
+                chunk.export(temp_file.name, format="wav")
+                temp_file.seek(0)
+                
+                
+                with sr.AudioFile(temp_file.name) as source:
+                    audio = recognizer.record(source)
+                    
+                    try:
+                        text = recognizer.recognize_google(audio, language="fr-FR")
+                        full_text += text + " "
+                    except sr.UnknownValueError:
+                        full_text += "Incomprehensible language"
+                        
+                    except sr.RequestError as e:
+                        raise HTTPException(status_code = 500, detail=f"errerur d'api google : {e}")
+                    
+                    
+        return  {"filename": filename, "transcription": full_text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la transcription : {str(e)}")
+    
 
-# Afficher la transcription complète
-print("Transcription complète :")
-print(full_text)
+                    
+                
