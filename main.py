@@ -162,7 +162,7 @@
 # un exemple de speech recognition
 
 
-from fastapi import FastAPI, HTTPException 
+from fastapi import FastAPI, File, HTTPException, UploadFile 
 import os
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
@@ -225,3 +225,60 @@ async def get_transcript(filename: str):
 
                     
                 
+@app.post("/transcription/")
+async def post_audio_file(file: UploadFile = File(...)):
+    """
+    Endpoint pour uploader un fichier audio et le transcrire.
+    - `file`: fichier audio uploadé.
+    """
+    # Vérifier le type de fichier
+    if not file.filename.endswith(".wav"):
+        raise HTTPException(status_code=400, detail="Seuls les fichiers .wav sont acceptés")
+
+    try:
+        # Sauvegarder le fichier temporairement
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+            temp_file.write(await file.read())
+            temp_filename = temp_file.name
+
+        # Charger le fichier audio avec pydub
+        sound = AudioSegment.from_wav(temp_filename)
+
+        # Découper l'audio en segments basés sur les silences
+        audio_chunks = split_on_silence(
+            sound,
+            min_silence_len=500,  # Silence minimal en millisecondes
+            silence_thresh=sound.dBFS-14,  # Seuil pour détecter le silence
+            keep_silence=500  # Garder un peu de silence autour des segments
+        )
+
+        # Initialiser le reconnaisseur
+        recognizer = sr.Recognizer()
+        full_text = ""
+
+        # Transcrire chaque chunk
+        for i, chunk in enumerate(audio_chunks):
+            # Utiliser des fichiers temporaires pour chaque segment
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_chunk_file:
+                chunk.export(temp_chunk_file.name, format="wav")
+                temp_chunk_file.seek(0)  # Revenir au début du fichier
+
+                # Charger le segment dans SpeechRecognition
+                with sr.AudioFile(temp_chunk_file.name) as source:
+                    audio = recognizer.record(source)
+                    try:
+                        text = recognizer.recognize_google(audio, language="fr-FR")
+                        full_text += text + " "
+                    except sr.UnknownValueError:
+                        full_text += "[Incompréhensible] "
+                    except sr.RequestError as e:
+                        raise HTTPException(status_code=500, detail=f"Erreur API Google : {e}")
+
+        # Supprimer le fichier temporaire original
+        os.remove(temp_filename)
+
+        # Retourner la transcription
+        return {"filename": file.filename, "transcription": full_text.strip()}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la transcription : {str(e)}")
