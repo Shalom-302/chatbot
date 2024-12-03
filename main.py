@@ -21,8 +21,8 @@
 # router = APIRouter(prefix="/streamlit", tags=["Streamlit"])
 
 # load_dotenv()
-# # os.getenv("AIzaSyDRwZkwArrKtGbg8GJlQE_4hnRTvzA4gI8")
-# genai.configure(api_key="AIzaSyD50jeE2wcguwlL9gSk5Mc8A6G8T-CnW3o")
+# # os.getenv("")
+# genai.configure(api_key="")
 
 # def get_pdf_text(pdf_file: UploadFile):
 #     text = ""
