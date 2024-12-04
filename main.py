@@ -1,28 +1,29 @@
-# from typing import Annotated, List
-# from PyPDF2 import PdfReader
-# from fastapi import APIRouter, Request, UploadFile, File
-# import os
-# import google.generativeai as genai
-# from PIL import Image
-# from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-# from langchain_text_splitters import RecursiveCharacterTextSplitter
-# import pytesseract
-# from langchain_community.vectorstores import FAISS
-# from io import BytesIO
-# from langchain.prompts import PromptTemplate
-# from glob import glob
-# import asyncio
-# import concurrent.futures
-# from functools import partial
+from typing import Annotated, List
+from PyPDF2 import PdfReader
+from dotenv import load_dotenv
+from fastapi import APIRouter, Request, UploadFile, File
+import os
+import google.generativeai as genai
+from PIL import Image
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+import pytesseract
+from langchain_community.vectorstores import FAISS
+from io import BytesIO
+from langchain.prompts import PromptTemplate
+from glob import glob
+import asyncio
+import concurrent.futures
+from functools import partial
 
 # from langchain.chains.question_answering import load_qa_chain
 # from dotenv import load_dotenv
 
 # router = APIRouter(prefix="/streamlit", tags=["Streamlit"])
 
-# load_dotenv()
-# # os.getenv("")
-# genai.configure(api_key="")
+load_dotenv()
+# os.getenv("")
+genai.configure(api_key="")
 
 # def get_pdf_text(pdf_file: UploadFile):
 #     text = ""
@@ -168,8 +169,8 @@ from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import speech_recognition as sr
 import tempfile  # Pour les fichiers temporaires
-
-
+from proc_files import get_text_chunks, get_vector_store
+from map import get_mapreduce_chain
 app = FastAPI()
 
 @app.get("/")
@@ -197,7 +198,7 @@ async def get_transcript(filename: str):
         
         recognizer =  sr.Recognizer()
         
-        full_text = ""
+        text = ""
         
         for i , chunk in enumerate(audio_chunks):
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_file:
@@ -209,8 +210,8 @@ async def get_transcript(filename: str):
                     audio = recognizer.record(source)
                     
                     try:
-                        text = recognizer.recognize_google(audio, language="fr-FR, eng-US")
-                        full_text += text + " "
+                        text0 = recognizer.recognize_google(audio, language="fr-FR, eng-US")
+                        text += text0 + " "
                     except sr.UnknownValueError:
                         full_text += "Incomprehensible language"
                         
@@ -218,7 +219,7 @@ async def get_transcript(filename: str):
                         raise HTTPException(status_code = 500, detail=f"errerur d'api google : {e}")
                     
                     
-        return  {"filename": filename, "transcription": full_text.strip()}
+        return  {"filename": filename, "transcription": text.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la transcription : {str(e)}")
     
@@ -254,7 +255,7 @@ async def post_audio_file(file: UploadFile = File(...)):
 
         # Initialiser le reconnaisseur
         recognizer = sr.Recognizer()
-        full_text = ""
+        text = ""
 
         # Transcrire chaque chunk
         for i, chunk in enumerate(audio_chunks):
@@ -267,18 +268,36 @@ async def post_audio_file(file: UploadFile = File(...)):
                 with sr.AudioFile(temp_chunk_file.name) as source:
                     audio = recognizer.record(source)
                     try:
-                        text = recognizer.recognize_google(audio, language="fr-FR")
-                        full_text += text + " "
+                        text0 = recognizer.recognize_google(audio, language="fr-FR,en-US")
+                        text += text0 + " "
                     except sr.UnknownValueError:
-                        full_text += "[Incompréhensible] "
+                        text += "[Incompréhensible] "
                     except sr.RequestError as e:
                         raise HTTPException(status_code=500, detail=f"Erreur API Google : {e}")
 
         # Supprimer le fichier temporaire original
         os.remove(temp_filename)
-
+        text_chunks = get_text_chunks(text)
+        get_vector_store(text_chunks)
         # Retourner la transcription
-        return {"filename": file.filename, "transcription": full_text.strip()}
+        return {"filename": file.filename, "transcription": "success"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la transcription : {str(e)}")
+    
+    
+@app.post("/question", summary="Ask question")
+async def user_input(user_question: str):
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+
+    # Recherche des documents similaires
+    docs = new_db.similarity_search(user_question)
+
+  
+
+    # Chaîne MapReduce
+    chain = get_mapreduce_chain()
+    response = chain.invoke({"input_documents": docs, "question": user_question})
+    # print response
+    return {"response": response}

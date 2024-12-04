@@ -8,13 +8,10 @@ from langchain.chains.combine_documents.map_reduce import MapReduceDocumentsChai
 # Fonction pour la phase map
 def get_map_chain():
     map_template = """
-    Répondez à la question aussi précisément que possible en utilisant uniquement le contexte fourni, qui concerne les trajets, les lignes de bus, les stations et le trafic urbain dans le Grand Abidjan. 
-    Assurez-vous de fournir tous les détails disponibles liés à ces sujets. 
-    Si la réponse ne se trouve pas dans le contexte fourni, ou si la question ne concerne pas les trajets et le trafic urbain, répondez simplement : 
-    "Je suis désolé, je ne peux répondre qu'aux questions liées aux trajets et au trafic urbain dans le Grand Abidjan."
-    Ne fournissez pas de réponse incorrecte ou hors contexte.
-
-
+   Réponds à la question de l'utilisateur uniquement en te basant sur la transcription disponible dans FAISS. 
+   Utilise le texte transcrit pour comprendre le contexte et fournir une réponse claire et concise. 
+   N'invente rien et ne propose pas de détails qui ne figurent pas dans la transcription. 
+   Si la réponse n'est pas clairement disponible dans la transcription, indique-le.
     {docs}
     Question : {question}
     Réponse :

@@ -11,7 +11,7 @@ from langchain_community.vectorstores import FAISS
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-from fl import get_text_chunks, get_vector_store, process_files
+from proc_files import get_text_chunks, get_vector_store, process_files
 from map import get_mapreduce_chain
 
 # Charger les variables d'environnement
